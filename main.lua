@@ -45,7 +45,7 @@ function love.load ()
   objects.zombie.walkingAnim = anim.newAnimation(objects.zombie.walkinGrid('1-5', 1 , '1-5' , 2) , 0.07)
 
   objects.zombie.idleGrid = anim.newGrid(100 , 123 , objects.zombie.idle:getWidth() , objects.zombie.idle:getHeight())
-  objects.zombie.idleAnim = anim.newAnimation(objects.zombie.idleGrid('1-5' , 1 , '1-5', 2 , '1-5' , 3) , 0.07)
+  objects.zombie.idleAnim = anim.newAnimation(objects.zombie.idleGrid('1-5' , 1 , '1-5', 2 , '1-5' , 3) , 0.1)
 
 end
 
@@ -53,6 +53,7 @@ function love.update(dt)
 
   world:update(dt) -- faz o mundo funcionar na mesma taxa de update
   x, y = objects.zombie.body:getLinearVelocity()
+  objects.zombie.idleAnim:update(dt)
   --- ufo movement
   if objects.ufo.posx >= 1200 then
     objects.ufo.direc = false
@@ -83,8 +84,10 @@ function love.update(dt)
   if love.keyboard.isDown('right') then
     objects.zombie.body:applyForce(400, 0)
     objects.zombie.direc = true
+    objects.zombie.isWalking = true
     objects.zombie.walkingAnim:update(dt)
   elseif love.keyboard.isDown('left') then
+    objects.zombie.isWalking = true
     objects.zombie.body:applyForce(-400,0)
     objects.zombie.direc = false
     objects.zombie.walkingAnim:update(dt)
@@ -93,7 +96,10 @@ end
 
 -- Stop inertia
 function love.keyreleased(k)
-  if k == 'right' or k =='left' then objects.zombie.body:setLinearVelocity(0,0) end
+  if k == 'right' or k =='left' then
+    objects.zombie.body:setLinearVelocity(0,0)
+    objects.zombie.isWalking = false
+  end
 end
 
 -- Draw
@@ -101,29 +107,20 @@ function love.draw()
   love.graphics.draw(objects.background, 0 , 0) -- bg
   love.graphics.draw(objects.ground.img, 0, objects.ground.body:getY() - 420/2) -- chão
   love.graphics.draw(objects.ufo.img, objects.ufo.posx, objects.ufo.posy)
-  --love.graphics.polygon("fill", objects.bomb.body:getWorldPoints(objects.bomb.shape:getPoints()))
 
-
-  --shot
-  for i = 0 , 3 , 1 do
-    objects.bomb.posx = love.math.random(1 , 800)
-
-    if objects.bomb.shot then
-      love.graphics.draw(objects.bomb.img , objects.bomb.body:getX() - 80 , objects.bomb.body:getY() - 130)
-    end
-  end
   -- turnarround
-  if  x > 0 or x < 0  then
+  if not objects.zombie.isWalking then
+    if objects.zombie.direc then
+      objects.zombie.idleAnim:draw(objects.zombie.idle , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , 1 , 1 , 50 , 0)
+    elseif not objects.zombie.direc then
+      objects.zombie.idleAnim:draw(objects.zombie.idle , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , -1 , 1 , 50 , 0)
+    end
+
+  elseif objects.zombie.isWalking  then
     if objects.zombie.direc  then
       objects.zombie.walkingAnim:draw(objects.zombie.walking , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , 1 , 1 , 50 , 0)
     elseif not objects.zombie.direc then
       objects.zombie.walkingAnim:draw(objects.zombie.walking , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , -1 , 1 ,50 , 0)
-    end
-  elseif x == 0 then
-    if objects.zombie.direc  then
-      objects.zombie.idleAnim:draw(objects.zombie.idle , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , 1 , 1 , 50 , 0)
-    elseif not objects.zombie.direc then
-      objects.zombie.idleAnim:draw(objects.zombie.idle , objects.zombie.body:getX() , objects.zombie.body:getY() - 70 ,0 , -1 , 1 ,50 , 0)
     end
   end
 
